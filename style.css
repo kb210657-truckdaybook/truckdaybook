@@ -1,0 +1,150 @@
+/* TruckDaybook - Website */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #0F172A;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  color: #0F172A;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+.site-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+area { cursor: pointer; }
+
+/* Download-Bereich unter dem Bild – heller Abschnitt wie im Vorschaubild */
+.below {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  margin-top: 20px;
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.below .kicker {
+  display: inline-block;
+  color: #F97316;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.below h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 0.5rem;
+}
+
+.below h2 .accent { color: #F97316; }
+
+.below p {
+  color: #64748B;
+  margin-bottom: 1.5rem;
+}
+
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #F97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.9rem 1.8rem;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 8px 22px rgba(249,115,22,0.35);
+  transition: transform .15s, box-shadow .15s;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  background: #EA580C;
+  box-shadow: 0 12px 28px rgba(249,115,22,0.45);
+}
+
+.btn-download small {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.below .hint {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+}
+
+/* Live-Demo – dunkler Abschnitt, geht nahtlos in das Phone ueber */
+.below.demo {
+  background: #0B1220;
+  border: 1px solid #1E293B;
+}
+
+.below.demo h2 { color: #F8FAFC; }
+.below.demo p { color: #94A3B8; }
+.below.demo .hint { color: #64748B; }
+
+.demo .demo-frame {
+  margin: 1rem auto 0;
+  max-width: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  border: 1px solid #1E293B;
+}
+.demo iframe {
+  display: block;
+  width: 100%;
+  height: 1090px;
+  border: none;
+}
+@media (max-width: 480px) {
+  .demo iframe { height: calc(100vw * 2.16 + 130px); }
+  .below { padding: 1.4rem; }
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  color: #94A3B8;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.footer-links a {
+  color: #CBD5E1;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.footer-links a:hover { color: #F97316; }
+
+.copyright {
+  font-size: 0.85rem;
+  color: #64748B;
+}

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=430">
+<title>TruckDaybook Basis – Interaktive App-Vorschau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: #0B1220;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 12px;
+  }
+  h1 { color: #F8FAFC; font-size: 20px; margin-bottom: 4px; }
+  .subtitle { color: #94A3B8; font-size: 13px; margin-bottom: 18px; }
+  .hint { color: #64748B; font-size: 11.5px; margin-top: 14px; max-width: 380px; text-align: center; }
+
+  /* ===== Samsung A36 ===== */
+  .phone { width: min(430px, calc(100vw - 20px)); height: auto; aspect-ratio: 430 / 928; background: #000; border-radius: 46px; padding: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7), inset 0 0 0 2px #1e1e1e; position: relative; }
+  .phone::before { content:''; position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    width:13px; height:13px; background:#0a0a0a; border-radius:50%;
+    box-shadow: inset 0 0 0 2px #222; z-index: 20; }
+  .screen { width:100%; height:100%; background:#F8FAFC; border-radius:34px; overflow:hidden;
+    display:flex; flex-direction:column; position:relative; }
+
+  .statusbar { display:flex; justify-content:space-between; align-items:center;
+    padding:5px 18px 2px; font-size:11px; font-weight:600; color:#0F172A; flex:none; }
+
+  /* ===== Header ===== */
+  .app-header { background:#1E293B; padding:9px 14px; display:flex; align-items:center; gap:10px; flex:none; }
+  .app-header img { width:36px; height:36px; }
+  .app-header .name { font-size:18px; font-weight:800; color:#fff; line-height:1.05; }
+  .app-header .name span { color:#F97316; }
+  .app-header .claim { font-size:8.5px; color:#94A3B8; }
+  .app-header .help { margin-left:auto; color:#fff; font-size:16px; cursor:pointer; width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center; }
+
+  .sub-header { background:#1E293B; padding:9px 6px; display:flex; align-items:center; flex:none; }
+  .sub-header .back { color:#fff; font-size:20px; width:44px; height:38px; cursor:pointer; border:none;
+    background:none; display:flex; align-items:center; justify-content:center; }
+  .sub-header img { width:28px; height:28px; margin-right:8px; }
+  .sub-header .t { color:#fff; font-size:17px; font-weight:700; flex:1; text-align:center; padding-right:44px; }
+
+  /* ===== Content ===== */
+  .content { flex:1; padding:10px 13px; overflow-y:auto; }
+  .content::-webkit-scrollbar { width:0; }
+
+  .greeting { font-size:20px; font-weight:800; color:#0F172A; }
+  .greeting .greet-tail { font-size:13px; font-weight:600; color:#64748B; }
+  .greet-sub { font-size:11.5px; color:#64748B; margin:2px 0 10px; }
+
+  .shift-btns { display:flex; gap:9px; margin-bottom:9px; }
+  .shift-btns button { flex:1; height:48px; border:none; border-radius:12px;
+    font-weight:800; font-size:12px; color:#fff; cursor:pointer; font-family:inherit; }
+  .btn-start { background:#16A34A; }
+  .btn-start:disabled { background:#E2E8F0; color:#94A3B8; }
+  .btn-end { background:#DC2626; }
+  .btn-end:disabled { background:#E2E8F0; color:#94A3B8; }
+
+  .menu { background:#fff; border:1px solid #E2E8F0; border-radius:15px; overflow:hidden; }
+  .menu-row { display:flex; align-items:center; gap:12px; padding:0 14px 0 16px; height:54px;
+    border-bottom:1px solid #E2E8F0; cursor:pointer; transition:background .15s;
+    position:relative; border:2px solid transparent; border-radius:10px; margin:2px 4px; }
+  .menu-row:last-child { border-bottom:none; }
+  .menu-row:active { background:#F1F5F9; }
+  .menu-row.active { background:#FFF7ED; border-color:var(--ac,#F97316); }
+  .menu-row.disabled { opacity:.38; pointer-events:none; background:#F1F5F9; }
+  .menu-row img { width:24px; height:24px; }
+  .menu-row .lbl { font-size:15px; color:#1E293B; font-weight:600; }
+  .menu-row .sub { font-size:10.5px; color:#94A3B8; display:block; font-weight:400; }
+  .menu-row .chev { margin-left:auto; color:#94A3B8; font-size:21px; font-weight:300; }
+  .menu-row.active .lbl { color:var(--ac,#F97316); }
+  .menu-row .abar { position:absolute; left:0; top:0; bottom:0; width:5px; border-radius:5px 0 0 5px; }
+  .menu-row .edit { margin-left:auto; color:#94A3B8; font-size:15px; padding:4px 4px 4px 8px; }
+  .menu-row .edit ~ .chev { margin-left:0; }
+  .menu-row .dot { width:8px; height:8px; border-radius:50%; background:#F97316; margin-left:auto; }
+
+  .status-card { background:#fff; border:1px solid #E2E8F0; border-radius:13px; margin-top:8px;
+    padding:9px 13px; display:flex; align-items:center; }
+  .status-card .bar { width:4px; height:32px; background:#F97316; border-radius:2px; margin-right:11px; }
+  .status-card .txt { font-size:14px; font-weight:700; color:#0F172A; }
+  .status-card .sub-txt { font-size:11px; color:#64748B; }
+  .status-card .timer { margin-left:auto; font-size:19px; font-weight:800; color:#F97316; font-variant-numeric:tabular-nums; }
+
+  .tiles { display:flex; gap:9px; margin-top:9px; }
+  .tile { flex:1; background:#fff; border:1px solid #E2E8F0; border-radius:13px; padding:9px 10px; }
+  .tile .t-title { font-size:9.5px; font-weight:800; color:#64748B; }
+  .tile .t-big { font-size:18px; font-weight:800; color:#0F172A; margin:2px 0 4px; font-variant-numeric:tabular-nums; }
+  .tile .t-row { display:flex; justify-content:space-between; font-size:10px; color:#64748B; padding:1px 0; }
+  .tile .t-row b { color:#0F172A; font-variant-numeric:tabular-nums; }
+
+  .blockcard { background:#fff; border:1px solid #E2E8F0; border-radius:13px; margin-top:9px; padding:9px 11px; }
+  .blockcard .b-title { font-size:10px; font-weight:800; color:#64748B; margin-bottom:7px; }
+  .blockcard .mini-tiles { display:flex; gap:7px; }
+  .mini { flex:1; border:1.5px solid #E2E8F0; border-radius:11px; padding:6px 3px; text-align:center; cursor:pointer; }
+  .mini.hl { border-color:#F97316; }
+  .mini .m-name { font-size:9px; font-weight:700; color:#0F172A; }
+  .mini .m-val { font-size:12.5px; font-weight:800; margin-top:1px; font-variant-numeric:tabular-nums; }
+  .mini.hl .m-val { color:#F97316; }
+  .mini:nth-child(2) .m-val { color:#1E293B; }
+  .mini:nth-child(3) .m-val { color:#64748B; }
+  .mini:nth-child(4) .m-val { color:#0F172A; }
+
+  .sec-title { font-size:10.5px; font-weight:800; color:#64748B; margin:13px 2px 7px; }
+  .card { background:#fff; border:1px solid #E2E8F0; border-radius:13px; padding:12px; margin-bottom:9px; }
+  .card h3 { font-size:13.5px; font-weight:800; color:#0F172A; margin-bottom:4px; }
+  .card p { font-size:11.5px; color:#64748B; line-height:1.45; }
+  .card .btn { margin-top:9px; background:#1E293B; color:#fff; border:none; border-radius:8px;
+    padding:9px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .card .btn.orange { background:#F97316; }
+  .card .btn.ghost { background:#94A3B8; }
+
+  .extras-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .ex-tile { background:#fff; border:1.5px solid #1E293B; border-radius:14px; padding:13px 8px;
+    text-align:center; cursor:pointer; transition:transform .1s; }
+  .ex-tile:active { transform:scale(.97); }
+  .ex-tile .e-ico { font-size:23px; margin-bottom:5px; }
+  .ex-tile .e-name { font-size:12px; font-weight:700; color:#0F172A; }
+  .ex-tile .e-sub { font-size:9px; color:#94A3B8; margin-top:2px; }
+
+  .detail-note { background:#FFF7ED; border:1px solid #FED7AA; color:#9A3412; border-radius:10px;
+    padding:9px 12px; font-size:11.5px; margin-bottom:10px; }
+  .big-msg { text-align:center; padding:30px 20px; }
+  .big-msg .ico { font-size:44px; margin-bottom:10px; }
+  .big-msg .t { font-size:16px; font-weight:800; color:#0F172A; }
+  .big-msg .s { font-size:12px; color:#64748B; margin-top:5px; }
+
+  /* ===== TabBar ===== */
+  .tabbar { background:#1E293B; display:flex; justify-content:space-around; padding:6px 0 9px;
+    border-top:1px solid #334155; flex:none; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#94A3B8;
+    font-size:9px; cursor:pointer; flex:1; padding-top:3px; }
+  .tab img { width:20px; height:20px; opacity:.5; }
+  .tab.active { color:#F97316; }
+  .tab.active img { opacity:1; filter:invert(59%) sepia(92%) saturate(2100%) hue-rotate(1deg) brightness(102%); }
+
+  .screen-page { display:none; flex:1; flex-direction:column; overflow:hidden; }
+  .screen-page.on { display:flex; }
+
+  /* Confirm overlay */
+  .overlay { position:absolute; inset:0; background:rgba(11,18,32,.55); display:none;
+    align-items:center; justify-content:center; z-index:50; }
+  .overlay.on { display:flex; }
+  .dlg { background:#fff; border-radius:16px; padding:20px; width:min(290px, 92vw); text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.4); }
+  .dlg .d-t { font-size:16px; font-weight:800; color:#0F172A; margin-bottom:5px; }
+  .dlg .d-s { font-size:12px; color:#64748B; margin-bottom:15px; }
+  .dlg .d-btns { display:flex; gap:9px; }
+  .dlg button { flex:1; padding:11px; border:none; border-radius:10px; font-weight:800;
+    font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .dlg .b-no { background:#E2E8F0; color:#475569; }
+  .dlg .b-yes { background:#DC2626; color:#fff; }
+</style>
+</head>
+<body>
+  <h1>TruckDaybook Basis</h1>
+  <div class="subtitle">Interaktive Vorschau – Samsung Galaxy A36 · alle Tabs &amp; Funktionen klickbar</div>
+
+  <div class="phone">
+    <div class="screen">
+
+      <!-- ================= DASHBOARD ================= -->
+      <div class="screen-page on" id="pg-dashboard">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="app-header">
+          <img src="truckdaybook_logo.png">
+          <div><div class="name">Truck<span>Daybook</span></div>
+          <div class="claim">Das digitale Fahrtenbuch für LKW-Fahrer</div></div>
+          <div class="help">?</div>
+        </div>
+        <div class="content">
+          <div class="greeting" id="greeting">Hallo Max <span class="greet-tail" id="greetTail"></span></div>
+          <div class="greet-sub">Alles im Blick – für eine gute Fahrt.</div>
+
+          <div class="shift-btns">
+            <button class="btn-start" id="btnStart" onclick="startShift()">Start-Arbeitstag</button>
+            <button class="btn-end" id="btnEnd" onclick="askEndShift()" disabled>Ende-Arbeitstag</button>
+          </div>
+
+          <div class="menu" id="activityMenu">
+            <div class="menu-row disabled" id="row-fahren" style="--ac:#16A34A" onclick="openPage('fahren')">
+              <div class="abar" style="background:#16A34A"></div><img src="fahren_dark.png"><div class="lbl">Fahren</div><div class="chev">›</div>
+            </div>
+            <div class="menu-row disabled" id="row-arbeit" style="--ac:#2563EB" onclick="openPage('arbeit')">
+              <div class="abar" style="background:#2563EB"></div><img src="arbeiten_wrench_dark.png"><div class="lbl">Arbeiten</div><div class="chev">›</div>
+            </div>
+            <div class="menu-row disabled" id="row-bereitschaft" style="--ac:#F97316" onclick="openBereitschaft()">
+              <div class="abar" style="background:#F97316"></div><img src="bereitschaft_clock_dark.png"><div class="lbl">Bereitschaft</div><div class="chev">›</div>
+            </div>
+            <div class="menu-row disabled" id="row-pause" style="--ac:#9333EA" onclick="openPage('pause')">
+              <div class="abar" style="background:#9333EA"></div><img src="pause_mug_hot_dark.png"><div class="lbl">Pause</div><div class="chev">›</div>
+            </div>
+          </div>
+
+          <div class="status-card">
+            <div class="bar" id="stBar" style="background:#94A3B8"></div>
+            <div><div class="txt" id="stMain">Bitte Tätigkeit wählen</div>
+            <div class="sub-txt" id="stSub"></div></div>
+            <div class="timer" id="stTimer">00:00:00</div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile">
+              <div class="t-title">ARBEITSTAG</div>
+              <div class="t-big" id="wdDur">0:00</div>
+              <div class="t-row"><span>Beginn</span><b id="wdStart">--:-- Uhr</b></div>
+              <div class="t-row"><span>Ende</span><b id="wdEnd">--:-- Uhr</b></div>
+            </div>
+            <div class="tile">
+              <div class="t-title">ZEITEN</div>
+              <div class="t-row"><span>Fahren</span><b id="tFahren">0:00</b></div>
+              <div class="t-row"><span>Arbeiten</span><b id="tArbeit">0:00</b></div>
+              <div class="t-row"><span>Bereitschaft</span><b id="tBereit">0:00</b></div>
+              <div class="t-row"><span>Pause</span><b id="tPause">0:00</b></div>
+            </div>
+          </div>
+
+          <div class="blockcard">
+            <div class="b-title">ZEITBLÖCKE</div>
+            <div class="mini-tiles">
+              <div class="mini hl"><div class="m-name">📅 Tag</div><div class="m-val" id="bTag">0:00</div></div>
+              <div class="mini"><div class="m-name">📈 Woche</div><div class="m-val" id="bWoche">0:00</div></div>
+              <div class="mini"><div class="m-name">🧭 2 Wochen</div><div class="m-val">0:00</div></div>
+              <div class="mini"><div class="m-name">🗓️ Monat</div><div class="m-val">0:00</div></div>
+            </div>
+          </div>
+
+          <!-- Update-Check: Version + Antippen = suchen -->
+          <div style="text-align:center; margin:14px 0 8px;" onclick="updateCheck()">
+            <span style="font-size:11.5px; color:#94A3B8;">Vers. 2.0.9</span>
+            <span style="font-size:11.5px; color:#CBD5E1;"> · </span>
+            <span style="font-size:11.5px; color:#2563EB; font-weight:700; text-decoration:underline;">Nach Update suchen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DETAIL: FAHREN ================= -->
+      <div class="screen-page" id="pg-fahren">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('dashboard')">‹</button>
+          <img src="fahren_white.png"><div class="t">Fahren</div>
+        </div>
+        <div class="content">
+          <div class="sec-title">UNTERTÄTIGKEIT WÄHLEN</div>
+          <div class="menu">
+            <div class="menu-row" onclick="setActivity('Fahren','Lenkzeit')"><img src="fahren_dark.png"><div class="lbl">Lenkzeit</div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Fahren','Stauzeit')"><img src="fahren_dark.png"><div class="lbl">Stauzeit</div><div class="chev">›</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DETAIL: ARBEIT ================= -->
+      <div class="screen-page" id="pg-arbeit">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('dashboard')">‹</button>
+          <img src="arbeiten_wrench_white.png"><div class="t">Arbeiten</div>
+        </div>
+        <div class="content">
+          <div class="sec-title">UNTERTÄTIGKEIT WÄHLEN</div>
+          <div class="menu">
+            <div class="menu-row" onclick="setActivity('Arbeiten','Abfahrtskontrolle')"><img src="abfahrtskontrolle_clipboard_check_dark.png"><div class="lbl">Abfahrtskontrolle</div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten',arbeitLabels.Bereitstellung)"><img src="arbeiten_wrench_dark.png"><div class="lbl" id="lbl-Bereitstellung">Bereitstellung</div><span class="edit" onclick="renameSub(event,'Bereitstellung')">✎</span><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten',arbeitLabels.Entladung)"><img src="arbeiten_wrench_dark.png"><div class="lbl" id="lbl-Entladung">Be.-/Entladung<span class="sub" id="lbl-EntladungSub">(Be.-Entladung)</span></div><span class="edit" onclick="renameSub(event,'Entladung')">✎</span><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten',arbeitLabels.Hofarbeit)"><img src="arbeiten_wrench_dark.png"><div class="lbl" id="lbl-Hofarbeit">Hofarbeit<span class="sub">(Tanken, Umsatteln usw.)</span></div><span class="edit" onclick="renameSub(event,'Hofarbeit')">✎</span><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten',arbeitLabels.Tankreinigung)"><img src="arbeiten_wrench_dark.png"><div class="lbl" id="lbl-Tankreinigung">Tankreinigung</div><span class="edit" onclick="renameSub(event,'Tankreinigung')">✎</span><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten',arbeitLabels.Grenzabfertigung)"><img src="arbeiten_wrench_dark.png"><div class="lbl" id="lbl-Grenzabfertigung">Grenzabfertigung</div><span class="edit" onclick="renameSub(event,'Grenzabfertigung')">✎</span><div class="chev">›</div></div>
+            <div class="menu-row" onclick="setActivity('Arbeiten','Lenkzeitfreie Arbeitszeit')"><img src="arbeiten_wrench_dark.png"><div class="lbl">Lenkzeitfreie Arbeitszeit<span class="sub">(Lehrgang, Schulung, Unterw.)</span></div><div class="chev">›</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DETAIL: BEREITSCHAFT ================= -->
+      <div class="screen-page" id="pg-bereitschaft">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('dashboard')">‹</button>
+          <img src="bereitschaft_clock_white.png"><div class="t">Bereitschaft</div>
+        </div>
+        <div class="content">
+          <div class="sec-title" id="bereitTitle">ENDE BEKANNT?</div>
+          <div class="menu" id="bereitMenu">
+            <div class="menu-row" onclick="bereitStep('unbekannt')"><img src="bereitschaft_clock_dark.png"><div class="lbl">Ende unbekannt<span class="sub">zählt zur Arbeitszeit (Bereitschaft)</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="bereitStep('bekannt')"><img src="pause_mug_hot_dark.png"><div class="lbl">Ende bekannt<span class="sub">nur Einsatzzeit (keine Arbeitszeit)</span></div><div class="chev">›</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DETAIL: PAUSE ================= -->
+      <div class="screen-page" id="pg-pause">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('dashboard')">‹</button>
+          <img src="pause_mug_hot_white.png"><div class="t">Pause</div>
+        </div>
+        <div class="content">
+          <div class="sec-title" id="pauseTitle">PAUSENART WÄHLEN</div>
+          <div class="detail-note" id="pauseEndNote" style="display:none;">Arbeitstag beendet – jetzt Ruhezeit wählen.</div>
+          <div class="menu">
+            <div class="menu-row" id="rowLenkpause" onclick="setActivity('Pause','Lenkzeitpause')"><img src="pause_mug_hot_dark.png"><div class="lbl">Lenkzeitpause</div><div class="chev">›</div></div>
+            <div class="menu-row disabled" id="rowTagesruhe" onclick="endWithRest('Tagesruhe','11 h')"><img src="pause_mug_hot_dark.png"><div class="lbl">Tagesruhe<span class="sub">Nur nach Ende-Arbeitstag</span></div><div class="chev">›</div></div>
+            <div class="menu-row disabled" id="rowWochenruhe" onclick="endWithRest('Wochenruhe','45 h')"><img src="pause_mug_hot_dark.png"><div class="lbl">Wochenruhe<span class="sub">Nur nach Ende-Arbeitstag</span></div><div class="chev">›</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= STAMMDATEN ================= -->
+      <div class="screen-page" id="pg-stammdaten">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="app-header">
+          <img src="truckdaybook_logo.png">
+          <div><div class="name">Stamm<span>daten</span></div>
+          <div class="claim">Das digitale Fahrtenbuch für LKW-Fahrer</div></div>
+        </div>
+        <div class="content">
+          <div class="sec-title">STAMMDATEN BEARBEITEN</div>
+          <div class="menu">
+            <div class="menu-row" onclick="openMaster('driver')"><div class="lbl">🧑‍✈️ Fahrerstammdaten<span class="sub" id="msDriver">Name, Führerschein, Urlaub</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="openMaster('company')"><div class="lbl">🏢 Unternehmerstammdaten<span class="sub" id="msCompany">Firma, Stunden, Zuschläge</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="openMaster('vehicle')"><div class="lbl">🚛 Fahrzeugstammdaten<span class="sub" id="msVehicle">Kennzeichen, Hersteller</span></div><div class="chev">›</div></div>
+          </div>
+          <div class="sec-title">EINSTELLUNGEN</div>
+          <div class="menu">
+            <div class="menu-row" onclick="showStub('Kilometerstand-Einstellungen')"><div class="lbl">🛣️ Kilometerstand-Einstellungen</div><div class="chev">›</div></div>
+          </div>
+          <div class="detail-note" style="margin-top:10px;">Basis-Version: CMR-Stammdaten (Adressen, Güter, Equipment) sind Teil von TruckDaybook Plus.</div>
+        </div>
+      </div>
+
+      <!-- ================= EXTRAS ================= -->
+      <div class="screen-page" id="pg-extras">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="app-header">
+          <img src="truckdaybook_logo.png">
+          <div><div class="name">Ex<span>tras</span></div>
+          <div class="claim">Das digitale Fahrtenbuch für LKW-Fahrer</div></div>
+        </div>
+        <div class="content">
+          <div class="sec-title">ZUSATZFUNKTIONEN – KACHEL ANTIPPEN ZUM ÖFFNEN</div>
+          <div class="extras-grid">
+            <div class="ex-tile" onclick="openPage('tankweiten')"><div class="e-ico">🛣️</div><div class="e-name">Tankweiten</div><div class="e-sub">Rechner</div></div>
+            <div class="ex-tile" onclick="showStub('Urlaub &amp; Krankheit')"><div class="e-ico">🏖️</div><div class="e-name">Urlaub &amp; Krankheit</div><div class="e-sub">Abwesenheiten erfassen</div></div>
+            <div class="ex-tile" onclick="showStub('Wochenendruhe planen')"><div class="e-ico">🗓️</div><div class="e-name">Wochenendruhe</div><div class="e-sub">planen</div></div>
+          </div>
+          <div class="detail-note" style="margin-top:10px;">Basis-Version: Tankstelle &amp; CMR Frachtbrief sind Teil von TruckDaybook Plus.</div>
+        </div>
+      </div>
+
+      <!-- ================= TANKWEITEN ================= -->
+      <div class="screen-page" id="pg-tankweiten">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('extras')">‹</button>
+          <img src="fahren_white.png"><div class="t">Tankweiten-Rechner</div>
+        </div>
+        <div class="content">
+          <div class="card">
+            <h3>🛣️ Tankweiten-Rechner</h3>
+            <p>Wie weit kommst du mit deinem Diesel?</p>
+            <div style="margin-top:10px;">
+              <label style="font-size:11px;color:#64748B;font-weight:700;">TANKINHALT (Liter)</label>
+              <input id="twLiter" type="number" value="600" style="width:100%;margin-top:3px;padding:9px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:15px;font-weight:700;">
+              <label style="font-size:11px;color:#64748B;font-weight:700;display:block;margin-top:9px;">VERBRAUCH (l/100 km)</label>
+              <input id="twVerbrauch" type="number" value="28" step="0.5" style="width:100%;margin-top:3px;padding:9px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:15px;font-weight:700;">
+              <button class="btn orange" style="width:100%;margin-top:11px;" onclick="calcTw()">Reichweite berechnen</button>
+              <div id="twResult" style="text-align:center;margin-top:12px;font-size:24px;font-weight:800;color:#F97316;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= BERICHTE ================= -->
+      <div class="screen-page" id="pg-berichte">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="app-header">
+          <img src="truckdaybook_logo.png">
+          <div><div class="name">Be<span>richte</span></div>
+          <div class="claim">Das digitale Fahrtenbuch für LKW-Fahrer</div></div>
+        </div>
+        <div class="content">
+          <div class="sec-title">BERICHT WÄHLEN</div>
+          <div class="menu">
+            <div class="menu-row" onclick="showStub('Schichtbericht')"><div class="lbl">📋 Schichtbericht<span class="sub">Arbeitstag im Überblick</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="showStub('Monatsbericht')"><div class="lbl">📊 Monatsbericht<span class="sub">Lenkzeiten &amp; Summen</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="showStub('EU-Grenzwerte')"><div class="lbl">⚖️ EU-Grenzwerte<span class="sub">&amp; Kompensation</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="showStub('Gespeicherte Berichte')"><div class="lbl">💾 Gespeicherte<span class="sub">Berichte</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="showStub('Stundenzettel')"><div class="lbl">🕐 Stundenzettel<span class="sub">Stunden &amp; Zuschläge</span></div><div class="chev">›</div></div>
+            <div class="menu-row" onclick="showStub('Spesen / Diäten')"><div class="lbl">💶 Spesen/Diäten<span class="sub">Ausland &amp; Nächtigungen</span></div><div class="chev">›</div></div>
+          </div>
+          <div class="detail-note" style="margin-top:10px;">Basis-Version: Equipment-Einsatzliste ist Teil von TruckDaybook Plus.</div>
+        </div>
+      </div>
+
+      <!-- ================= MEHR ================= -->
+      <div class="screen-page" id="pg-mehr">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="app-header">
+          <img src="truckdaybook_logo.png">
+          <div><div class="name">Me<span>hr</span></div>
+          <div class="claim">Das digitale Fahrtenbuch für LKW-Fahrer</div></div>
+        </div>
+        <div class="content">
+          <div class="card">
+            <h3>🤝 Von Fahrer zu Fahrer</h3>
+            <p>TruckDaybook hat ein Berufskraftfahrer im internationalen Fernverkehr entwickelt – für sich selbst und für Kolleginnen und Kollegen. Die App ist kostenlos und bleibt es dauerhaft.</p>
+            <button class="btn orange" style="width:100%;">An einen Kollegen schicken</button>
+          </div>
+          <div class="card">
+            <h3>📖 Anwenderhandbuch</h3>
+            <p>Vollständige Doku aller Funktionen, Eingaben und automatischen Berechnungen (PDF).</p>
+            <div style="display:flex;gap:8px;"><button class="btn" style="flex:1;">Anzeigen</button><button class="btn ghost" style="flex:1;">Teilen</button></div>
+          </div>
+          <div class="card">
+            <h3>ℹ️ App-Info</h3>
+            <p>TruckDaybook <b>Basis</b> · Version 2.0.9<br>Kostenlos &amp; dauerhaft – für Berufskraftfahrer.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= STAMMDATEN: FAHRER ================= -->
+      <div class="screen-page" id="pg-mdriver">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('stammdaten')">‹</button>
+          <img src="truckdaybook_logo.png"><div class="t">Fahrerstammdaten</div>
+        </div>
+        <div class="content" id="frmDriver"></div>
+      </div>
+
+      <!-- ================= STAMMDATEN: UNTERNEHMEN ================= -->
+      <div class="screen-page" id="pg-mcompany">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('stammdaten')">‹</button>
+          <img src="truckdaybook_logo.png"><div class="t">Unternehmerstammdaten</div>
+        </div>
+        <div class="content" id="frmCompany"></div>
+      </div>
+
+      <!-- ================= STAMMDATEN: FAHRZEUG ================= -->
+      <div class="screen-page" id="pg-mvehicle">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('stammdaten')">‹</button>
+          <img src="truckdaybook_logo.png"><div class="t">Fahrzeugstammdaten</div>
+        </div>
+        <div class="content" id="frmVehicle"></div>
+      </div>
+
+      <!-- ================= STUB (Platzhalter) ================= -->
+      <div class="screen-page" id="pg-stub">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goBack()">‹</button>
+          <img src="truckdaybook_logo.png"><div class="t" id="stubTitle">Seite</div>
+        </div>
+        <div class="content">
+          <div class="big-msg">
+            <div class="ico">🚧</div>
+            <div class="t" id="stubHead">Bereich</div>
+            <div class="s">In der echten App öffnet sich hier das Tool.<br>In dieser Vorschau ist es ein Platzhalter.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TABBAR ================= -->
+      <div class="tabbar">
+        <div class="tab active" id="tab-dashboard" onclick="goTab('dashboard')"><img src="dashboard_house_white.png">Dashboard</div>
+        <div class="tab" id="tab-stammdaten" onclick="goTab('stammdaten')"><img src="erfassung_clipboard_list_white.png">Stammdaten</div>
+        <div class="tab" id="tab-extras" onclick="goTab('extras')"><img src="arbeiten_wrench_white.png">Extras</div>
+        <div class="tab" id="tab-berichte" onclick="goTab('berichte')"><img src="berichte_file_lines_white.png">Berichte</div>
+        <div class="tab" id="tab-mehr" onclick="goTab('mehr')"><img src="mehr_ellipsis_white.png">Mehr</div>
+      </div>
+
+      <!-- Ende-Dialog -->
+      <div class="overlay" id="endOverlay">
+        <div class="dlg">
+          <div class="d-t">Arbeitstag beenden?</div>
+          <div class="d-s">Der Tagesbericht wird gespeichert.</div>
+          <div class="d-btns">
+            <button class="b-no" onclick="closeEnd()">Abbrechen</button>
+            <button class="b-yes" onclick="askEndKm()">Beenden</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Update-Dialoge -->
+      <div class="overlay" id="ovSearch">
+        <div class="dlg">
+          <div class="d-t">Update-Prüfung</div>
+          <div class="d-s">Suche nach neuer Version …</div>
+          <div style="font-size:26px; color:#2563EB;">⏳</div>
+        </div>
+      </div>
+      <div class="overlay" id="ovCurrent">
+        <div class="dlg">
+          <div class="d-t">App ist aktuell</div>
+          <div class="d-s">Du verwendest bereits die neueste Version (2.0.9).</div>
+          <div class="d-btns">
+            <button class="b-no" onclick="$('ovCurrent').classList.remove('on')">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="overlay" id="ovUpdate">
+        <div class="dlg">
+          <div class="d-t">Update verfügbar</div>
+          <div class="d-s" style="text-align:left;">Neue Version <b>2.1.0</b> ist verfügbar.<br><br>Jetzt herunterladen und installieren?</div>
+          <div class="d-btns">
+            <button class="b-no" onclick="$('ovUpdate').classList.remove('on')">Später</button>
+            <button class="b-yes" style="background:#16A34A;" onclick="$('ovUpdate').classList.remove('on')">Jetzt installieren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KM-Dialog (Start + Ende) -->
+      <div class="overlay" id="kmOverlay">
+        <div class="dlg">
+          <div class="d-t" id="kmTitle">Kilometerstand</div>
+          <div class="d-s" id="kmSub">Bitte aktuellen Kilometerstand eingeben.</div>
+          <input id="kmInput" type="number" placeholder="z. B. 312450" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:17px;font-weight:700;text-align:center;margin-bottom:12px;">
+          <div class="d-btns">
+            <button class="b-no" onclick="closeKm()">Abbrechen</button>
+            <button class="b-yes" style="background:#1E293B;" onclick="confirmKm()">OK</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="hint">Alle Funktionen sind klickbar: Start-Arbeitstag → Tätigkeit wählen → Untertätigkeit → Timer läuft. Tabs unten wechseln die Bereiche.</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let state = { shift:false, start:null, act:null, sub:null, actSec:0, wd:0,
+              times:{Fahren:0,Arbeiten:0,Bereitschaft:0,Pause:0}, lastKm:0 };
+let lastTab = 'dashboard';
+
+// Deep-Link: app.html#stammdaten oeffnet direkt den Bereich
+const hash = location.hash.replace('#','');
+if(['dashboard','stammdaten','extras','berichte','mehr'].includes(hash)){ lastTab=hash; }
+document.addEventListener('DOMContentLoaded',()=>{ updateGreeting(); goTab(hash||'dashboard'); });
+function updateCheck(){
+  $('ovSearch').classList.add('on');
+  setTimeout(()=>{ $('ovSearch').classList.remove('on'); $('ovCurrent').classList.add('on'); }, 1200);
+}
+
+// Lauftext-Begrüßung wie in der App: "Hallo <Vorname> · es ist <Uhrzeit> · <Wochentag, Datum>"
+function updateGreeting(){
+  const d=new Date();
+  const days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const p2=n=>String(n).padStart(2,'0');
+  const name=(master.driver.firstName||'').trim();
+  $('greeting').innerHTML='Hallo'+(name?' '+name:'')+
+    ' <span class="greet-tail">· es ist '+p2(d.getHours())+':'+p2(d.getMinutes())+
+    ' · '+days[d.getDay()]+', '+p2(d.getDate())+'.'+p2(d.getMonth()+1)+'.'+d.getFullYear()+'</span>';
+}
+
+function show(id){ document.querySelectorAll('.screen-page').forEach(p=>p.classList.remove('on')); $('pg-'+id).classList.add('on'); }
+function setTab(name){ ['dashboard','stammdaten','extras','berichte','mehr'].forEach(t=>$('tab-'+t).classList.remove('active')); $('tab-'+name).classList.add('active'); }
+
+function goTab(t){ lastTab=t; show(t);
+  if(['dashboard','stammdaten','extras','berichte','mehr'].includes(t)) setTab(t); }
+function goBack(){ goTab(lastTab); }
+function openPage(p){
+  if(p==='pause' && !restMode){
+    // Normaler Pause-Modus: nur Lenkzeitpause wählbar
+    $('pauseTitle').textContent='PAUSENART WÄHLEN';
+    $('pauseEndNote').style.display='none';
+    $('rowLenkpause').classList.remove('disabled');
+    $('rowTagesruhe').classList.add('disabled');
+    $('rowWochenruhe').classList.add('disabled');
+    $('rowTagesruhe').querySelector('.sub').textContent='Nur nach Ende-Arbeitstag';
+    $('rowWochenruhe').querySelector('.sub').textContent='Nur nach Ende-Arbeitstag';
+  }
+  show(p);
+}
+function showStub(title){ $('stubTitle').textContent=title; $('stubHead').textContent=title; show('stub'); }
+
+function fmt(s){ const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return `${h}:${String(m).padStart(2,'0')}`; }
+function fmtHMS(s){ const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`; }
+function fmtClock(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} Uhr`; }
+
+let kmMode = null; // 'start' | 'end'
+let restMode = false;
+
+function startShift(){
+  // Start-Kilometerstand abfragen (wie echte App)
+  kmMode='start';
+  $('kmTitle').textContent='Start-Kilometerstand';
+  $('kmSub').textContent='Bitte den aktuellen Kilometerstand eingeben.';
+  $('kmInput').value = state.lastKm || '';
+  $('kmOverlay').classList.add('on');
+}
+function askEndShift(){ $('endOverlay').classList.add('on'); }
+function closeEnd(){ $('endOverlay').classList.remove('on'); }
+function askEndKm(){
+  closeEnd();
+  // End-Kilometerstand abfragen (wie echte App)
+  kmMode='end';
+  $('kmTitle').textContent='End-Kilometerstand';
+  $('kmSub').textContent='Bitte den aktuellen Kilometerstand eingeben.';
+  $('kmInput').value = state.lastKm || '';
+  $('kmOverlay').classList.add('on');
+}
+function closeKm(){
+  $('kmOverlay').classList.remove('on');
+  kmMode=null;
+}
+function confirmKm(){
+  const v=parseInt($('kmInput').value);
+  if(!v || v<0){ $('kmInput').style.borderColor='#DC2626'; $('kmInput').placeholder='Bitte gültigen km-Stand eingeben'; return; }
+  state.lastKm=v;
+  $('kmOverlay').classList.remove('on');
+  if(kmMode==='start'){ doStartShift(); }
+  else if(kmMode==='end'){ enterRestMode(); }
+  kmMode=null;
+}
+function doStartShift(){
+  state.shift=true; state.start=new Date(); state.wd=0;
+  state.times={Fahren:0,Arbeiten:0,Bereitschaft:0,Pause:0};
+  $('btnStart').disabled=true; $('btnEnd').disabled=false;
+  ['fahren','arbeit','bereitschaft','pause'].forEach(r=>$('row-'+r).classList.remove('disabled'));
+  $('wdStart').textContent=fmtClock(state.start);
+  const end=new Date(state.start); end.setHours(end.getHours()+13);
+  $('wdEnd').textContent=fmtClock(end);
+}
+function enterRestMode(){
+  // wie echte App: PausePage im Ende-Modus - nur Tagesruhe/Wochenruhe
+  restMode=true;
+  $('pauseTitle').textContent='RUHEZEIT WÄHLEN';
+  $('pauseEndNote').style.display='block';
+  $('rowLenkpause').classList.add('disabled');
+  $('rowTagesruhe').classList.remove('disabled');
+  $('rowWochenruhe').classList.remove('disabled');
+  $('rowTagesruhe').querySelector('.sub').textContent='9 oder 11 h';
+  $('rowWochenruhe').querySelector('.sub').textContent='24 oder 45 h';
+  show('pause');
+}
+function endWithRest(rest, duration){
+  restMode=false;
+  state.shift=false; state.act=null; state.sub=rest; state.actSec=0;
+  $('btnStart').disabled=false; $('btnEnd').disabled=true;
+  ['fahren','arbeit','bereitschaft','pause'].forEach(r=>{ $('row-'+r).classList.add('disabled'); $('row-'+r).classList.remove('active'); });
+  $('stMain').textContent=rest+' läuft ('+duration+')';
+  $('stSub').textContent='Arbeitstag beendet – Tagesbericht gespeichert';
+  $('stBar').style.background='#9333EA';
+  goTab('dashboard');
+}
+function setActivity(main,sub){
+  state.act=main; state.sub=sub; state.actSec=0;
+  ['fahren','arbeit','bereitschaft','pause'].forEach(r=>$('row-'+r).classList.remove('active'));
+  const map={Fahren:'fahren',Arbeiten:'arbeit',Bereitschaft:'bereitschaft',Pause:'pause'};
+  $('row-'+map[main]).classList.add('active');
+  $('stMain').textContent=main;
+  $('stSub').textContent=sub;
+  const col={Fahren:'#16A34A',Arbeiten:'#2563EB',Bereitschaft:'#F97316',Pause:'#9333EA'};
+  $('stBar').style.background=col[main]||'#94A3B8';
+  goTab('dashboard');
+}
+
+// Bereitschaft: erst „Ende bekannt?" wählen, dann Wartegrund – wie in der App
+let bereitEnde=null;
+const bereitReasons=['Warten Beladung','Warten Entladung','Warten auf Info','Sonstiges'];
+function openBereitschaft(){
+  bereitEnde=null;
+  $('bereitTitle').textContent='ENDE BEKANNT?';
+  $('bereitMenu').innerHTML=
+    '<div class="menu-row" onclick="bereitStep(\'unbekannt\')"><img src="bereitschaft_clock_dark.png"><div class="lbl">Ende unbekannt<span class="sub">zählt zur Arbeitszeit (Bereitschaft)</span></div><div class="chev">›</div></div>'+
+    '<div class="menu-row" onclick="bereitStep(\'bekannt\')"><img src="pause_mug_hot_dark.png"><div class="lbl">Ende bekannt<span class="sub">nur Einsatzzeit (keine Arbeitszeit)</span></div><div class="chev">›</div></div>';
+  show('bereitschaft');
+}
+function bereitStep(end){
+  bereitEnde=end;
+  $('bereitTitle').textContent='WARTEN AUF?';
+  $('bereitMenu').innerHTML=bereitReasons.map(r=>
+    '<div class="menu-row" onclick="pickBereit(\''+r+'\')"><img src="bereitschaft_clock_dark.png"><div class="lbl">'+r+'</div><div class="chev">›</div></div>').join('');
+}
+function pickBereit(r){
+  if(bereitEnde==='bekannt') setActivity('Pause','Wartezeit bekannt – '+r);
+  else setActivity('Bereitschaft',r);
+}
+
+// Arbeit: editierbare Untertätigkeiten (Stift) – wie in der App (Abfahrtskontrolle & Lenkzeitfreie fest)
+let arbeitLabels={Bereitstellung:'Bereitstellung',Entladung:'Be.-/Entladung',Hofarbeit:'Hofarbeit',Tankreinigung:'Tankreinigung',Grenzabfertigung:'Grenzabfertigung'};
+function renameSub(e,key){
+  e.stopPropagation();
+  const n=prompt('Neuer Text für „'+arbeitLabels[key]+'“:',arbeitLabels[key]);
+  if(n===null) return;
+  arbeitLabels[key]=n.trim()||key;
+  $('lbl-'+key).childNodes[0].textContent=arbeitLabels[key];
+}
+function calcTw(){
+  const l=parseFloat($('twLiter').value)||0, v=parseFloat($('twVerbrauch').value)||1;
+  $('twResult').textContent = v>0 ? '≈ '+Math.round(l/v*100).toLocaleString('de-DE')+' km' : '—';
+}
+
+/* ============ Stammdaten-Formulare (Basis: Fahrer/Unternehmen/Fahrzeug) ============ */
+let master = {
+  driver: {firstName:'Max', lastName:'Mustermann', birthDate:'1980-04-12', driverId:'D-12345', licenseNumber:'B081234567', ceExpiryDate:'2029-06-30', cardExpiryDate:'2027-01-15', country:'Deutschland', region:'', hireDate:'2020-09-01', annualVacation:'30', vacationMode:'Jahresanspruch', unit:'Arbeitstage'},
+  company: {name:'Muster Spedition GmbH', street:'Industriestraße 12', postalCode:'12345', city:'Berlin', country:'Deutschland', monthlyGross:'3200', weeklyHours:'40', inclOvertime:'0', surchargesIncl:false},
+  vehicle: {plate:'B-TR 1234', manufacturer:'MAN', model:'TGX 18.470', year:'2021', emissionClass:'Euro 6'}
+};
+
+const driverFields = [
+  ['firstName','Vorname','text'],['lastName','Nachname','text'],['birthDate','Geburtsdatum','date'],
+  ['driverId','Fahrer-ID / Fahrernummer','text'],['licenseNumber','Führerschein-Nr.','text'],
+  ['ceExpiryDate','CE-Ablaufdatum','date'],['cardExpiryDate','Fahrerkarte gültig bis','date'],
+  ['country','Land','text'],['region','Region / Bundesland','text'],
+  ['hireDate','Einstellungsdatum','date'],['annualVacation','Jahresurlaub (Tage)','number'],
+  ['vacationMode','Urlaubsart (Jahres-/Monatsanspruch)','text'],['unit','Einheit (Arb.-/Kalendertage)','text']
+];
+const companyFields = [
+  ['name','Firmenname','text'],['street','Straße','text'],['postalCode','PLZ','text'],
+  ['city','Ort','text'],['country','Land','text'],
+  ['monthlyGross','Monatsbrutto (€)','number'],['weeklyHours','Wochenstunden','number'],
+  ['inclOvertime','Inkl. Überstunden','number']
+];
+const vehicleFields = [
+  ['plate','Kennzeichen','text'],['manufacturer','Hersteller','text'],['model','Modell','text'],
+  ['year','Baujahr','number'],['emissionClass','Emissionsklasse','text']
+];
+
+function fld(key,label,type,section){
+  const v = master[section][key] ?? '';
+  return `<div class="card" style="margin-bottom:8px;padding:9px 12px;">
+    <label style="font-size:10.5px;color:#64748B;font-weight:800;display:block;margin-bottom:3px;">${label.toUpperCase()}</label>
+    <input id="f_${section}_${key}" type="${type}" value="${v}" style="width:100%;padding:8px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:600;color:#0F172A;">
+  </div>`;
+}
+
+function openMaster(section){
+  const fields = section==='driver'?driverFields:section==='company'?companyFields:vehicleFields;
+  const label = section==='driver'?'Fahrer':section==='company'?'Unternehmer':'Fahrzeug';
+  const container = section==='driver'?'frmDriver':section==='company'?'frmCompany':'frmVehicle';
+  let html = `<div class="detail-note">${label}stammdaten bearbeiten – wie in der echten Basis-App.</div>`;
+  fields.forEach(([k,l,t])=> html+=fld(k,l,t,section));
+  if(section==='company'){
+    const chk = master.company.surchargesIncl?'checked':'';
+    html += `<div class="card" style="padding:9px 12px;display:flex;align-items:center;gap:9px;">
+      <input type="checkbox" id="f_company_surchargesIncl" ${chk} style="width:20px;height:20px;">
+      <label for="f_company_surchargesIncl" style="font-size:13px;font-weight:600;color:#0F172A;">Zuschläge im Gehalt enthalten</label></div>`;
+  }
+  html += `<button class="btn orange" style="width:100%;margin-top:4px;" onclick="saveMaster('${section}')">💾 Speichern</button>`;
+  $(container).innerHTML = html;
+  show('m'+section);
+}
+
+function saveMaster(section){
+  const fields = section==='driver'?driverFields:section==='company'?companyFields:vehicleFields;
+  fields.forEach(([k])=>{ const el=$('f_'+section+'_'+k); if(el) master[section][k]=el.value; });
+  if(section==='company'){ const el=$('f_company_surchargesIncl'); if(el) master.company.surchargesIncl=el.checked; }
+  // Kurz-Zusammenfassung in der Liste anzeigen
+  if(section==='driver'){ $('msDriver').textContent=(master.driver.firstName+' '+master.driver.lastName).trim()||'Name, Führerschein, Urlaub'; updateGreeting(); }
+  if(section==='company') $('msCompany').textContent=master.company.name||'Firma, Stunden, Zuschläge';
+  if(section==='vehicle') $('msVehicle').textContent=(master.vehicle.plate+' · '+master.vehicle.manufacturer+' '+master.vehicle.model).trim()||'Kennzeichen, Hersteller';
+  goTab('stammdaten');
+}
+setInterval(()=>{
+  if(!state.shift) return;
+  state.wd++; 
+  if(state.act){ state.actSec++; state.times[state.act]++; }
+  $('stTimer').textContent=state.act?fmtHMS(state.actSec):fmtHMS(0);
+  $('wdDur').textContent=fmt(state.wd);
+  $('bTag').textContent=fmt(state.wd);
+  $('bWoche').textContent=fmt(state.wd);
+  $('tFahren').textContent=fmt(state.times.Fahren);
+  $('tArbeit').textContent=fmt(state.times.Arbeiten);
+  $('tBereit').textContent=fmt(state.times.Bereitschaft);
+  $('tPause').textContent=fmt(state.times.Pause);
+},1000);
+</script>
+</body>
+</html>
