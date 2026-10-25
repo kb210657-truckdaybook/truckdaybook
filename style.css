@@ -336,6 +336,32 @@ img { max-width: 100%; }
   cursor: default;
 }
 
+/* Tester-Call-to-Action */
+.tester-cta {
+  margin: 1.8rem auto 0;
+  max-width: 640px;
+  background: #fff;
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 1.8rem 1.4rem;
+}
+
+.tester-cta h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.tester-cta > p { color: var(--muted); margin-bottom: 1.2rem; }
+
+.tester-steps {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tester-steps .btn { font-size: 0.98rem; padding: 0.8rem 1.4rem; }
+
 .notify { margin-top: 1.6rem; color: var(--muted); }
 
 .btn-notify {
