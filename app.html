@@ -340,6 +340,7 @@
           </div>
           <div class="sec-title">EINSTELLUNGEN</div>
           <div class="menu">
+            <div class="menu-row" onclick="openMonthly()"><div class="lbl">💰 Monatswerte (Lohnabrechnung)<span class="sub">Mindestlohn- / KV-Check</span></div><div class="chev">›</div></div>
             <div class="menu-row" onclick="showStub('Kilometerstand-Einstellungen')"><div class="lbl">🛣️ Kilometerstand-Einstellungen</div><div class="chev">›</div></div>
             <div class="menu-row" onclick="showStub('Spesen-Sätze / Steuerland')"><div class="lbl">💶 Spesen-Sätze / Steuerland<span class="sub">Auslands-Tagegelder &amp; Zuschläge</span></div><div class="chev">›</div></div>
           </div>
@@ -441,7 +442,7 @@
           </div>
           <div class="card">
             <h3>ℹ️ App-Info</h3>
-            <p>TruckDaybook <b>Basis</b> · Version 2.0.32<br>Kostenlos &amp; dauerhaft – für Berufskraftfahrer.</p>
+            <p>TruckDaybook <b>Basis</b> · Version 2.0.36<br>Kostenlos &amp; dauerhaft – für Berufskraftfahrer.</p>
           </div>
         </div>
       </div>
@@ -464,6 +465,38 @@
           <img src="truckdaybook_logo.png"><div class="t">Unternehmerstammdaten</div>
         </div>
         <div class="content" id="frmCompany"></div>
+      </div>
+
+      <!-- ================= MONATSWERTE ================= -->
+      <div class="screen-page" id="pg-mmonthly">
+        <div class="statusbar"><span>09:41</span><span>📶 5G ▮▮▮▯</span></div>
+        <div class="sub-header">
+          <button class="back" onclick="goTab('stammdaten')">‹</button>
+          <img src="truckdaybook_logo.png"><div class="t">Monatswerte</div>
+        </div>
+        <div class="content">
+          <div class="card">
+            <div style="font-size:10.5px;color:#64748B;font-weight:800;margin-bottom:3px;">ABRECHNUNGSMONAT</div>
+            <div style="display:flex;gap:8px;">
+              <select id="mpMonth" onchange="updMonthly()" style="flex:1;padding:8px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:600;">
+                <option>Januar</option><option>Februar</option><option>März</option><option>April</option>
+                <option>Mai</option><option>Juni</option><option>Juli</option><option>August</option>
+                <option>September</option><option selected>Oktober</option><option>November</option><option>Dezember</option>
+              </select>
+              <select id="mpYear" onchange="updMonthly()" style="padding:8px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:600;">
+                <option>2025</option><option selected>2026</option><option>2027</option>
+              </select>
+            </div>
+          </div>
+          <div class="card" style="margin-top:8px;">
+            <div style="font-size:10.5px;color:#64748B;font-weight:800;margin-bottom:3px;">ANRECHENBARES BRUTTO (STEUERBRUTTO)</div>
+            <input id="mpGross" type="number" inputmode="decimal" placeholder="z. B. 3600" oninput="updMonthly()"
+                   style="width:100%;padding:8px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:600;color:#0F172A;">
+          </div>
+          <div class="card" id="mpInfo" style="margin-top:8px;background:#EFF6FF;"></div>
+          <div class="card" id="mpResult" style="margin-top:8px;"></div>
+          <div class="detail-note" style="margin-top:10px;">In der App rechnet der Prüfrechner live mit deinen echten Fahrdaten – hier mit Demo-Werten.</div>
+        </div>
       </div>
 
       <!-- ================= STAMMDATEN: FAHRZEUG ================= -->
@@ -727,6 +760,61 @@ function renameSub(e,key){
   arbeitLabels[key]=n.trim()||key;
   $('lbl-'+key).childNodes[0].textContent=arbeitLabels[key];
 }
+// ============ Monatswerte: Mini-Prüfrechner (spiegelt die echte Logik) ============
+const MP_IST_H = 255.58;                 // Demo-Ist-Stunden (wie echte Oktober-Daten)
+const MP_MILOG = {2025:12.82, 2026:13.90, 2027:14.60};
+const MP_KV = {kraftfahrer:2687.85, lkwfahrer:2641.20, lap:2730.45};  // KV 2026, ≤5 J.
+
+function openMonthly(){ show('mmonthly'); updMonthly(); }
+
+function updMonthly(){
+  const gross = parseFloat(($('mpGross').value||'').replace(',','.')) || 0;
+  const year  = parseInt($('mpYear').value)||2026;
+  const mon   = $('mpMonth').value;
+  const isAT  = /österreich|austria|^at\b/i.test((master.company.country||'').trim());
+  const w     = MP_MILOG[year];
+  const info  = $('mpInfo'), res = $('mpResult');
+
+  if(!isAT && w){
+    info.innerHTML = `<b style="color:#1D4ED8;">Arbeitgeber-Land: ${master.company.country} · Mindestlohn ${mon} ${year}: ${w.toFixed(2)} €/h — Check aktiv</b>`;
+  } else if(isAT){
+    const grp=(master.driver.kvGroup||'lkwfahrer').toLowerCase();
+    const kv=MP_KV[grp]||MP_KV.lkwfahrer;
+    info.innerHTML = `<b style="color:#1D4ED8;">Arbeitgeber-Land: AT · KV-Mindestlohn ${mon} ${year}: ${kv.toLocaleString('de-DE',{minimumFractionDigits:2})} € — KV-Check aktiv</b>`;
+  } else {
+    info.innerHTML = `<b style="color:#64748B;">Arbeitgeber-Land: ${master.company.country} — kein Check für ${year} hinterlegt</b>`;
+  }
+
+  res.innerHTML = `<b>Ist-Stunden ${mon} ${year}: 255:34 h</b> <span style="color:#64748B;">(Demo-Fahrdaten)</span><br>`;
+  if(gross<=0){ res.innerHTML+=`<span style="color:#64748B;">Steuerbrutto eintippen → Prüfung startet sofort</span>`; return; }
+
+  const eff = gross/MP_IST_H;
+  res.innerHTML += `Effektiver Stundenlohn: <b>${eff.toFixed(2)} €/h</b><br>`;
+
+  if(!isAT && w){
+    if(eff>=w){
+      res.innerHTML += `<b style="color:#15803D;">Mindestlohn (${w.toFixed(2)} €) eingehalten ✓</b>`;
+    } else {
+      const fehl = MP_IST_H*w-gross;
+      res.innerHTML += `<b style="color:#DC2626;">UNTER MINDESTLOHN (${w.toFixed(2)} €) – MiLoG § 3</b><br>`+
+        `<span style="color:#DC2626;">Mindestbrutto: ${(MP_IST_H*w).toLocaleString('de-DE',{minimumFractionDigits:2})} € · Fehlbetrag: ${fehl.toLocaleString('de-DE',{minimumFractionDigits:2})} €</span>`;
+    }
+  } else if(isAT){
+    const grp=(master.driver.kvGroup||'lkwfahrer').toLowerCase();
+    const kv=MP_KV[grp]||MP_KV.lkwfahrer;
+    const weekly=parseFloat(master.company.weeklyHours)||40;
+    const soll=weekly*13/3;
+    const ot=Math.max(0,MP_IST_H-soll);
+    const claim=kv+ot*(kv/164)*1.5;
+    if(gross>=claim){
+      res.innerHTML += `<b style="color:#15803D;">KV-Mindestanspruch (${claim.toLocaleString('de-DE',{minimumFractionDigits:2})} €) eingehalten ✓</b>`;
+    } else {
+      res.innerHTML += `<b style="color:#DC2626;">UNTER KV-MINDESTLOHN (Speditions-KV)</b><br>`+
+        `<span style="color:#DC2626;">KV-Anspruch inkl. ÜStd: ${claim.toLocaleString('de-DE',{minimumFractionDigits:2})} € · Fehlbetrag: ${(claim-gross).toLocaleString('de-DE',{minimumFractionDigits:2})} €</span>`;
+    }
+  }
+}
+
 function calcTw(){
   const l=parseFloat($('twLiter').value)||0, v=parseFloat($('twVerbrauch').value)||1;
   $('twResult').textContent = v>0 ? '≈ '+Math.round(l/v*100).toLocaleString('de-DE')+' km' : '—';
@@ -745,7 +833,8 @@ const driverFields = [
   ['ceExpiryDate','CE-Ablaufdatum','date'],['cardExpiryDate','Fahrerkarte gültig bis','date'],
   ['country','Land','text'],['region','Region / Bundesland','text'],
   ['hireDate','Einstellungsdatum','date'],['annualVacation','Jahresurlaub (Tage)','number'],
-  ['vacationMode','Urlaubsart (Jahres-/Monatsanspruch)','text'],['unit','Einheit (Arb.-/Kalendertage)','text']
+  ['vacationMode','Urlaubsart (Jahres-/Monatsanspruch)','text'],['unit','Einheit (Arb.-/Kalendertage)','text'],
+  ['kvGroup','KV-Verwendungsgruppe (nur AT: kraftfahrer/lkwfahrer/lap)','text']
 ];
 const companyFields = [
   ['name','Firmenname','text'],['street','Straße','text'],['postalCode','PLZ','text'],
